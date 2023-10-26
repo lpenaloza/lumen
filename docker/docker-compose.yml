@@ -1,0 +1,60 @@
+version: '3.8'
+# https://gist.github.com/ChewySalmon/5702fc1b38feed7ed68ba6995b0785a0
+# https://github.com/pnlinh/docker-php/blob/master/8.1/Dockerfile
+services:
+  db:
+    env_file: common.env
+    image: mysql:8.0.20
+    container_name: ${COMPOSE_PROJECT_NAME}-mysql
+    hostname: ${COMPOSE_PROJECT_NAME}-mysql
+    command: "--character-set-server=utf8mb4 --collation-server=utf8mb4_0900_ai_ci --default-authentication-plugin=mysql_native_password"
+    ports:
+      - "${MYSQL_PORT}:3306"
+    volumes:
+      - ./data/mysql:/var/lib/mysql:delegated
+
+  backend:
+    env_file: common.env
+    container_name: ${COMPOSE_PROJECT_NAME}-backend
+    build:
+      context: ../backend/
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ../backend/api:/var/www/
+    depends_on:
+      - db
+    links:
+      - db
+
+  frontend:
+    image: ${COMPOSE_PROJECT_NAME}-frontend
+    container_name: ${COMPOSE_PROJECT_NAME}-frontend
+    hostname: ${COMPOSE_PROJECT_NAME}-frontend
+    env_file: common.env
+    ports:
+      - "3000:3000"
+    build:
+      context: ../frontend
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ../frontend/:/app
+
+  redis:
+    container_name: ${COMPOSE_PROJECT_NAME}-redis
+    image: redis:latest
+
+  proxy:
+    env_file: common.env
+    container_name: ${COMPOSE_PROJECT_NAME}-proxy
+    hostname: ${COMPOSE_PROJECT_NAME}-proxy
+    build:
+      context: ./
+      dockerfile: proxy/Dockerfile
+    volumes:
+      - ./data/proxy/ssl:/etc/nginx/ssl
+      - ./data/proxy/doc-root:/var/www/html
+    ports:
+      - "${PROXY_PORT_HTTPS}:443"
+      - "${PROXY_PORT_HTTP}:80"
+    depends_on:
+      - backend

@@ -1,0 +1,14 @@
+/backend/nota.txt
+/docker/data/mysql/
+
+/frontend/node_modules
+/frontend/.next
+/frontend/package-lock.json
+/.idea
+
+/docker/data/proxy
+/docker/data/mysql
+
+/backend/api/composer.lock
+/docker/common.env
+/docker/.env
